@@ -1,0 +1,54 @@
+# Nome do Workflow
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+# Tarefas (Jobs) a serem executadas
+jobs:
+  deploy:
+    # O tipo de máquina virtual (runner) onde o job vai rodar
+    runs-on: ubuntu-latest
+
+    # Passos que compõem o job
+    steps:
+      # 1. Faz o checkout do código do seu repositório para o runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configura a chave SSH e executa os comandos no servidor
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}        # IP ou domínio do servidor
+          username: ${{ secrets.SSH_USER }}    # Usuário do servidor
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Chave privada para autenticação
+          script: |
+            # Navega para o diretório do projeto no servidor
+            cd ${{ secrets.SERVER_PATH }}
+            
+            # Puxa as últimas alterações da branch 'main'
+            git pull origin main
+            
+            # --- Comandos Adicionais (Exemplos) ---
+            # Descomente e ajuste os comandos conforme a necessidade do seu projeto
+            
+            # Para projetos Node.js
+            echo "Instalando dependências e buildando..."
+            npm install
+            npm run build
+            
+            # Para projetos PHP (Composer)
+            echo "Instalando dependências do PHP..."
+            composer install --no-dev --optimize-autoloader
+            
+            # Para projetos com banco de dados (Laravel)
+            echo "Rodando migrations..."
+            php artisan migrate --force
+            
+            # Reiniciar um serviço (ex: PM2 para Node.js ou php-fpm)
+            # pm2 restart all
+            sudo systemctl restart php8.2-fpm
+            
+            echo "Deploy finalizado com sucesso!"
